@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz Battle — Play. Compete. Win.</title>
+<style>
+  :root{
+    --bg:#0b0d14; --panel:#11141f; --panel2:#161a28; --border:#262c40;
+    --violet:#7c5cff; --violet-d:#5b3df5; --green:#22c55e; --blue:#3b82f6;
+    --gold:#facc15; --red:#ef4444; --pink:#ec4899; --text:#e8e9f3; --muted:#8b90ab;
+    --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    background: radial-gradient(circle at 20% -10%, #1b1430 0%, var(--bg) 45%);
+    color:var(--text); font-family:var(--font); min-height:100vh;
+  }
+  .hidden{display:none !important;}
+  .wrap{max-width:1100px; margin:0 auto; padding:24px 18px 60px;}
+  .center-screen{min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px;}
+
+  /* ===== Auth ===== */
+  .auth-card{
+    width:100%; max-width:400px; background:var(--panel); border:1px solid var(--border);
+    border-radius:18px; padding:36px 32px; box-shadow:0 20px 60px rgba(0,0,0,.5);
+  }
+  .brand{display:flex; align-items:center; gap:10px; margin-bottom:6px;}
+  .brand .bolt{
+    width:38px; height:38px; border-radius:10px; background:linear-gradient(135deg,var(--violet),var(--pink));
+    display:flex; align-items:center; justify-content:center; font-size:20px;
+  }
+  .brand h1{font-size:20px; letter-spacing:.5px;}
+  .brand small{display:block; color:var(--muted); font-size:10px; letter-spacing:2px;}
+  .auth-card h2{margin:22px 0 4px; font-size:22px;}
+  .auth-card p.sub{color:var(--muted); font-size:13px; margin-bottom:22px;}
+  .field{margin-bottom:14px;}
+  .field label{font-size:12px; color:var(--muted); display:block; margin-bottom:6px;}
+  .field input, select, .field-input{
+    width:100%; background:#0e1119; border:1px solid var(--border); color:var(--text);
+    padding:11px 12px; border-radius:10px; font-size:14px; outline:none; transition:.15s;
+  }
+  .field input:focus, select:focus{border-color:var(--violet);}
+  .btn{
+    border:none; border-radius:10px; padding:12px 18px; font-size:14px; font-weight:600;
+    cursor:pointer; transition:.15s; width:100%;
+  }
+  .btn:active{transform:scale(.98);}
+  .btn-violet{background:linear-gradient(135deg,var(--violet),var(--violet-d)); color:#fff;}
+  .btn-green{background:linear-gradient(135deg,#22c55e,#16a34a); color:#fff;}
+  .btn-blue{background:linear-gradient(135deg,#3b82f6,#2563eb); color:#fff;}
+  .btn-outline{background:transparent; border:1px solid var(--border); color:var(--text);}
+  .btn-ghost{background:transparent; border:none; color:var(--violet); width:auto; padding:6px;}
+  .err{color:#fca5a5; font-size:12.5px; margin-top:8px; min-height:14px;}
+  .switch-row{text-align:center; margin-top:18px; font-size:13px; color:var(--muted);}
+  .switch-row a{color:var(--violet); cursor:pointer; font-weight:600;}
+
+  /* ===== App shell ===== */
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between; padding:14px 26px;
+    background:var(--panel); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:10;
+  }
+  .nav{display:flex; gap:6px;}
+  .nav button{
+    background:transparent; border:none; color:var(--muted); padding:9px 14px; border-radius:9px;
+    font-size:13.5px; cursor:pointer; display:flex; align-items:center; gap:6px; font-weight:500;
+  }
+  .nav button.active{background:var(--violet); color:#fff;}
+  .logout-btn{
+    background:rgba(239,68,68,.12); color:#fca5a5; border:1px solid rgba(239,68,68,.3);
+    padding:8px 14px; border-radius:9px; font-size:13px; cursor:pointer; font-weight:600;
+  }
+
+  .grid2{display:grid; grid-template-columns: 320px 1fr 340px; gap:18px; margin-top:20px;}
+  @media (max-width:980px){ .grid2{grid-template-columns:1fr;} }
+
+  .panel{background:var(--panel); border:1px solid var(--border); border-radius:16px; padding:22px;}
+  .panel h3{font-size:15px; margin-bottom:14px; display:flex; align-items:center; gap:8px;}
+
+  .welcome-banner{
+    grid-column:1 / -1; background:linear-gradient(120deg, #3d2c7a, #5e2c7a 60%, #7a2c5e);
+    border-radius:16px; padding:22px 26px; display:flex; align-items:center; justify-content:space-between;
+    margin-bottom:0;
+  }
+  .welcome-banner h2{font-size:21px;}
+  .welcome-banner p{color:#dcd6f5; font-size:13px; margin-top:4px;}
+
+  .avatar{
+    width:84px; height:84px; border-radius:50%; background:linear-gradient(135deg,#6d4ee0,#9b6ef3);
+    display:flex; align-items:center; justify-content:center; font-size:34px; margin:0 auto 12px;
+    border:3px solid #2a2147;
+  }
+  .profile-name{text-align:center; font-size:18px; font-weight:700;}
+  .profile-email{text-align:center; color:var(--muted); font-size:12.5px; margin-bottom:18px;}
+  .stat-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  .stat-box{background:var(--panel2); border:1px solid var(--border); border-radius:10px; padding:12px;}
+  .stat-box .label{font-size:11px; color:var(--muted); margin-bottom:4px;}
+  .stat-box .value{font-size:20px; font-weight:700;}
+
+  .room-card{background:var(--panel2); border:1px solid var(--border); border-radius:14px; padding:18px; margin-bottom:14px;}
+  .room-card h4{font-size:15px; margin-bottom:4px;}
+  .room-card p{font-size:12.5px; color:var(--muted); margin-bottom:14px;}
+  .icon-circle{
+    width:54px; height:54px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    font-size:24px; margin:6px auto 14px;
+  }
+
+  table{width:100%; border-collapse:collapse; font-size:13px;}
+  th{color:var(--muted); text-align:left; font-weight:600; font-size:11px; padding:6px 4px; border-bottom:1px solid var(--border);}
+  td{padding:9px 4px; border-bottom:1px solid #1c2032;}
+  .rank-badge{
+    width:22px; height:22px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center;
+    font-size:11px; font-weight:700; color:#1a1208;
+  }
+  .r1{background:var(--gold);} .r2{background:#c7cbe0; color:#1a1a22;} .r3{background:#cd8a4d;} .rN{background:#2a2f44; color:#cbd0e8;}
+
+  .cat-grid{display:grid; grid-template-columns:repeat(6,1fr); gap:12px; margin-top:16px;}
+  @media (max-width:780px){ .cat-grid{grid-template-columns:repeat(2,1fr);} }
+  .cat-btn{
+    border:1px solid var(--border); border-radius:12px; padding:16px 8px; text-align:center; cursor:pointer;
+    background:var(--panel2); transition:.15s; color:var(--text);
+  }
+  .cat-btn:hover{transform:translateY(-2px); border-color:var(--violet);}
+  .cat-btn.selected{border-color:var(--violet); background:rgba(124,92,255,.15); box-shadow:0 0 0 2px var(--violet) inset;}
+  .cat-btn .ico{font-size:24px; margin-bottom:8px;}
+  .cat-btn .nm{font-size:12.5px; font-weight:600;}
+
+  .badge{display:inline-block; padding:2px 9px; border-radius:20px; font-size:11px; font-weight:700;}
+  .win{background:rgba(34,197,94,.15); color:#4ade80;}
+  .loss{background:rgba(239,68,68,.15); color:#f87171;}
+
+  /* ===== Quiz / lobby specific ===== */
+  .center-card{max-width:560px; margin:60px auto; background:var(--panel); border:1px solid var(--border); border-radius:18px; padding:36px;}
+  .room-code-display{
+    text-align:center; font-size:38px; letter-spacing:10px; font-weight:800; color:var(--violet);
+    background:var(--panel2); border:1px dashed var(--violet); border-radius:12px; padding:18px 0; margin:18px 0;
+  }
+  .player-chip{
+    display:inline-flex; align-items:center; gap:6px; background:var(--panel2); border:1px solid var(--border);
+    padding:6px 12px; border-radius:20px; font-size:12.5px; margin:4px 6px 4px 0;
+  }
+  .question-count-row{display:flex; gap:8px; align-items:center; margin:10px 0 18px;}
+  .question-count-row input[type=range]{flex:1;}
+
+  .pass-screen{text-align:center;}
+  .pass-screen .who{font-size:30px; font-weight:800; margin:18px 0 6px; color:var(--violet);}
+  .progress-bar{height:6px; background:#1c2032; border-radius:4px; overflow:hidden; margin-bottom:22px;}
+  .progress-fill{height:100%; background:linear-gradient(90deg,var(--violet),var(--pink)); transition:.3s;}
+
+  .qcard{background:var(--panel); border:1px solid var(--border); border-radius:18px; padding:30px; max-width:640px; margin:40px auto;}
+  .qcard .qmeta{display:flex; justify-content:space-between; color:var(--muted); font-size:12px; margin-bottom:10px;}
+  .qcard h3{font-size:19px; line-height:1.4; margin-bottom:22px;}
+  .opt{
+    display:block; width:100%; text-align:left; background:var(--panel2); border:1px solid var(--border);
+    color:var(--text); padding:13px 16px; border-radius:10px; margin-bottom:10px; cursor:pointer; font-size:14px;
+    transition:.12s;
+  }
+  .opt:hover{border-color:var(--violet);}
+  .opt.correct{background:rgba(34,197,94,.18); border-color:var(--green);}
+  .opt.wrong{background:rgba(239,68,68,.18); border-color:var(--red);}
+  .opt[disabled]{cursor:default;}
+
+  .result-row{display:flex; align-items:center; justify-content:space-between; background:var(--panel2); border:1px solid var(--border); border-radius:12px; padding:14px 18px; margin-bottom:10px;}
+  .winner-row{border-color:var(--gold); box-shadow:0 0 0 1px var(--gold) inset;}
+  .trophy{font-size:24px;}
+
+  ::-webkit-scrollbar{width:8px;} ::-webkit-scrollbar-thumb{background:#2a2f44; border-radius:4px;}
+</style>
+</head>
+<body>
+
+<!-- ===================== AUTH SCREEN ===================== -->
+<div id="authScreen" class="center-screen">
+  <div class="auth-card">
+    <div class="brand">
+      <div class="bolt">⚡</div>
+      <div><h1>QUIZ BATTLE</h1><small>PLAY · COMPETE · WIN</small></div>
+    </div>
+
+    <div id="loginPane">
+      <h2>Welcome back</h2>
+      <p class="sub">Log in with your nickname to continue.</p>
+      <div class="field"><label>Nickname</label><input id="loginNick" placeholder="e.g. Paramasivan"></div>
+      <div class="field"><label>Password</label><input id="loginPass" type="password" placeholder="••••••••"></div>
+      <button class="btn btn-violet" onclick="doLogin()">Login</button>
+      <div class="err" id="loginErr"></div>
+      <div class="switch-row">New here? <a onclick="showAuth('signup')">Create an account</a></div>
+    </div>
+
+    <div id="signupPane" class="hidden">
+      <h2>Create account</h2>
+      <p class="sub">Pick a unique nickname — it can't be used by anyone else.</p>
+      <div class="field"><label>Nickname</label><input id="suNick" placeholder="Choose a unique nickname"></div>
+      <div class="field"><label>Password</label><input id="suPass" type="password" placeholder="Create a password"></div>
+      <button class="btn btn-green" onclick="doSignup()">Create Account</button>
+      <div class="err" id="suErr"></div>
+      <div class="switch-row">Already have an account? <a onclick="showAuth('login')">Login</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== APP ===================== -->
+<div id="app" class="hidden">
+  <div class="topbar">
+    <div class="brand"><div class="bolt">⚡</div><div><h1>QUIZ BATTLE</h1><small>PLAY · COMPETE · WIN</small></div></div>
+    <div class="nav">
+      <button class="navbtn active" data-tab="dashboard" onclick="goTab('dashboard')">🏠 Dashboard</button>
+      <button class="navbtn" data-tab="profile" onclick="goTab('profile')">👤 Profile</button>
+      <button class="navbtn" data-tab="history" onclick="goTab('history')">🕘 History</button>
+      <button class="navbtn" data-tab="leaderboard" onclick="goTab('leaderboard')">🏆 Leaderboard</button>
+    </div>
+    <button class="logout-btn" onclick="doLogout()">⏻ Logout</button>
+  </div>
+
+  <div class="wrap">
+
+    <!-- DASHBOARD TAB -->
+    <div id="tab-dashboard">
+      <div class="welcome-banner">
+        <div><h2 id="wbName">Welcome back!</h2><p>Ready for your next Quiz Battle?</p></div>
+        <div style="font-size:34px;">🏆</div>
+      </div>
+
+      <div class="grid2">
+        <div class="panel">
+          <div class="avatar">🙂</div>
+          <div class="profile-name" id="dpName">—</div>
+          <div class="profile-email" id="dpEmail">—</div>
+          <div class="stat-grid">
+            <div class="stat-box"><div class="label">Total Matches</div><div class="value" id="dpMatches">0</div></div>
+            <div class="stat-box"><div class="label">Total Wins</div><div class="value" id="dpWins" style="color:var(--green)">0</div></div>
+            <div class="stat-box"><div class="label">Highest Score</div><div class="value" id="dpHigh" style="color:var(--gold)">0</div></div>
+            <div class="stat-box"><div class="label">Win Rate</div><div class="value" id="dpRate" style="color:var(--violet)">0%</div></div>
+          </div>
+        </div>
+
+        <div>
+          <div class="panel" style="margin-bottom:18px;">
+            <h3>Create Battle Room</h3>
+            <p style="color:var(--muted); font-size:13px; margin-bottom:14px;">Pick a category, question count and players, then generate a room code to share.</p>
+
+            <div class="field"><label>Quiz Category</label>
+              <div class="cat-grid" id="catGrid"></div>
+            </div>
+
+            <div class="field" style="margin-top:16px;">
+              <label>Number of Questions: <span id="qCountLabel">10</span></label>
+              <div class="question-count-row">
+                <input type="range" id="qCountRange" min="10" max="15" value="10" oninput="qCountLabel.textContent=this.value">
+              </div>
+            </div>
+
+            <div class="field"><label>Total Players (2–5)</label>
+              <select id="playerCountSel">
+                <option value="2">2 Players</option>
+                <option value="3">3 Players</option>
+                <option value="4">4 Players</option>
+                <option value="5">5 Players</option>
+              </select>
+            </div>
+
+            <button class="btn btn-green" onclick="createRoom()">Create Room</button>
+          </div>
+
+          <div class="panel">
+            <h3>Join Battle Room</h3>
+            <p style="color:var(--muted); font-size:13px; margin-bottom:12px;">Enter the room code your friend shared with you.</p>
+            <div class="field"><input id="joinCodeInput" placeholder="Enter Room Code" style="text-align:center; letter-spacing:4px; font-weight:700;"></div>
+            <button class="btn btn-blue" onclick="joinRoom()">Join Room</button>
+            <div class="err" id="joinErr"></div>
+          </div>
+        </div>
+
+        <div>
+          <div class="panel" style="margin-bottom:18px;">
+            <h3>🏆 Live Leaderboard</h3>
+            <table><thead><tr><th>Rank</th><th>Player</th><th>Score</th></tr></thead><tbody id="dashLeaderBody"></tbody></table>
+          </div>
+          <div class="panel">
+            <h3>Battle History</h3>
+            <table><thead><tr><th>Date</th><th>Score</th><th>Result</th></tr></thead><tbody id="dashHistBody"></tbody></table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROFILE TAB -->
+    <div id="tab-profile" class="hidden">
+      <div class="panel" style="max-width:480px; margin:24px auto; text-align:center;">
+        <div class="avatar" style="margin:0 auto 14px;">🙂</div>
+        <h2 id="pfName">—</h2>
+        <p style="color:var(--muted); margin-bottom:18px;" id="pfEmail">—</p>
+        <div class="stat-grid">
+          <div class="stat-box"><div class="label">Total Matches</div><div class="value" id="pfMatches">0</div></div>
+          <div class="stat-box"><div class="label">Total Wins</div><div class="value" id="pfWins">0</div></div>
+          <div class="stat-box"><div class="label">Highest Score</div><div class="value" id="pfHigh">0</div></div>
+          <div class="stat-box"><div class="label">Win Rate</div><div class="value" id="pfRate">0%</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HISTORY TAB -->
+    <div id="tab-history" class="hidden">
+      <div class="panel" style="margin-top:24px;">
+        <h3>Your Battle History</h3>
+        <table><thead><tr><th>Date</th><th>Category</th><th>Score</th><th>Rank</th><th>Result</th></tr></thead><tbody id="fullHistBody"></tbody></table>
+      </div>
+    </div>
+
+    <!-- LEADERBOARD TAB -->
+    <div id="tab-leaderboard" class="hidden">
+      <div class="panel" style="margin-top:24px;">
+        <h3>🏆 Global Leaderboard</h3>
+        <table><thead><tr><th>Rank</th><th>Player</th><th>Highest Score</th><th>Wins</th><th>Matches</th></tr></thead><tbody id="fullLeaderBody"></tbody></table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ===================== LOBBY ===================== -->
+<div id="lobbyScreen" class="hidden center-screen">
+  <div class="center-card">
+    <h2 style="text-align:center;">Battle Room Lobby</h2>
+    <p style="text-align:center; color:var(--muted); font-size:13px; margin-top:6px;">Share this code with your friends</p>
+    <div class="room-code-display" id="lobbyCode">——————</div>
+    <p style="font-size:12.5px; color:var(--muted); margin-bottom:6px;">Category: <b id="lobbyCat" style="color:var(--text)"></b> · Questions: <b id="lobbyQ" style="color:var(--text)"></b></p>
+    <p style="font-size:12.5px; color:var(--muted); margin-bottom:10px;">Players joined (<span id="lobbyCount">1</span>/<span id="lobbyMax">2</span>):</p>
+    <div id="lobbyPlayers" style="margin-bottom:22px;"></div>
+    <button class="btn btn-violet" id="startBtn" onclick="startQuiz()" disabled>Need more players to start</button>
+    <button class="btn btn-outline" style="margin-top:10px;" onclick="leaveLobby()">Cancel Room</button>
+  </div>
+</div>
+
+<!-- ===================== JOIN-AS SCREEN (same-device join) ===================== -->
+<div id="joinAsScreen" class="hidden center-screen">
+  <div class="center-card">
+    <h2 style="text-align:center;">Join Room</h2>
+    <p style="text-align:center; color:var(--muted); font-size:13px; margin:8px 0 18px;">Room code <b id="joinAsCode" style="color:var(--violet);"></b> found! Enter your nickname to join.</p>
+    <div class="field"><input id="joinAsNick" placeholder="Your nickname"></div>
+    <button class="btn btn-blue" onclick="confirmJoin()">Join Battle</button>
+    <div class="err" id="joinAsErr"></div>
+    <button class="btn btn-outline" style="margin-top:10px;" onclick="cancelJoinAs()">Back</button>
+  </div>
+</div>
+
+<!-- ===================== PASS DEVICE SCREEN ===================== -->
+<div id="passScreen" class="hidden center-screen">
+  <div class="center-card pass-screen">
+    <div class="progress-bar"><div class="progress-fill" id="passProgress" style="width:0%"></div></div>
+    <p style="color:var(--muted);">Question <span id="passQNum">1</span> of <span id="passQTotal">10</span></p>
+    <p style="margin-top:18px;">📱 Pass the device to</p>
+    <div class="who" id="passWho">Player</div>
+    <p style="color:var(--muted); font-size:13px; margin-bottom:22px;">No one else should see your answer!</p>
+    <button class="btn btn-violet" onclick="revealQuestion()">I'm Ready — Show Question</button>
+  </div>
+</div>
+
+<!-- ===================== QUESTION SCREEN ===================== -->
+<div id="quizScreen" class="hidden">
+  <div class="qcard">
+    <div class="qmeta"><span id="qCatLabel">Category</span><span id="qPlayerLabel">Player</span></div>
+    <h3 id="qText">Question text</h3>
+    <div id="qOptions"></div>
+  </div>
+</div>
+
+<!-- ===================== RESULTS SCREEN ===================== -->
+<div id="resultsScreen" class="hidden center-screen">
+  <div class="center-card" style="max-width:560px;">
+    <h2 style="text-align:center;">🏁 Battle Results</h2>
+    <p style="text-align:center; color:var(--muted); font-size:13px; margin:6px 0 22px;">Here's how everyone did</p>
+    <div id="resultsList"></div>
+    <button class="btn btn-violet" style="margin-top:18px;" onclick="playAgain()">Play Again</button>
+    <button class="btn btn-outline" style="margin-top:10px;" onclick="exitToDashboard()">Exit to Dashboard</button>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   DATA LAYER (localStorage)
+   ============================================================ */
+const LS_USERS = 'qb_users';
+const LS_ROOMS = 'qb_rooms';
+let currentUser = null;
+
+function getUsers(){ return JSON.parse(localStorage.getItem(LS_USERS) || '{}'); }
+function saveUsers(u){ localStorage.setItem(LS_USERS, JSON.stringify(u)); }
+function getRooms(){ return JSON.parse(localStorage.getItem(LS_ROOMS) || '{}'); }
+function saveRooms(r){ localStorage.setItem(LS_ROOMS, JSON.stringify(r)); }
+
+function simpleHash(str){
+  let h = 0;
+  for(let i=0;i<str.length;i++){ h = (h<<5)-h+str.charCodeAt(i); h|=0; }
+  return h.toString();
+}
+
+/* ============================================================
+   QUESTION BANK — 6 categories
+   ============================================================ */
+const QUESTION_BANK = {
+  "General Knowledge": [
+    ["What is the capital of France?",["Paris","Rome","Madrid","Berlin"],0],
+    ["Which planet is known as the Red Planet?",["Venus","Mars","Jupiter","Saturn"],1],
+    ["How many continents are there on Earth?",["5","6","7","8"],2],
+    ["What is the largest ocean on Earth?",["Atlantic","Indian","Arctic","Pacific"],3],
+    ["Who wrote the play 'Romeo and Juliet'?",["Charles Dickens","William Shakespeare","Mark Twain","Leo Tolstoy"],1],
+    ["What is the currency of Japan?",["Won","Yuan","Yen","Ringgit"],2],
+    ["Which gas do plants absorb from the atmosphere?",["Oxygen","Nitrogen","Carbon Dioxide","Hydrogen"],2],
+    ["What is the tallest mountain in the world?",["K2","Kangchenjunga","Mount Everest","Lhotse"],2],
+    ["How many days are there in a leap year?",["364","365","366","367"],2],
+    ["Which country is known as the Land of the Rising Sun?",["China","Japan","Thailand","Korea"],1],
+    ["What is the smallest prime number?",["0","1","2","3"],2],
+    ["Which organ pumps blood through the human body?",["Liver","Lungs","Heart","Kidney"],2],
+    ["What is the national bird of India?",["Eagle","Peacock","Sparrow","Crow"],1],
+    ["Which is the longest river in the world?",["Amazon","Nile","Ganges","Yangtze"],1],
+    ["What do you call a group of stars forming a pattern?",["Galaxy","Nebula","Constellation","Orbit"],2]
+  ],
+  "Java": [
+    ["Which keyword is used to inherit a class in Java?",["this","super","extends","implements"],2],
+    ["What is the default value of a boolean in Java?",["true","false","0","null"],1],
+    ["Which method is the entry point of a Java program?",["start()","main()","run()","init()"],1],
+    ["Which collection class allows duplicate elements?",["Set","Map","List","TreeSet"],2],
+    ["What is JVM?",["Java Virtual Machine","Java Verified Method","Java Variable Manager","Java Visual Mode"],0],
+    ["Which keyword prevents a class from being inherited?",["static","final","private","abstract"],1],
+    ["What is the size of an int in Java?",["8 bit","16 bit","32 bit","64 bit"],2],
+    ["Which exception is thrown when array index is invalid?",["NullPointerException","ArrayIndexOutOfBoundsException","ClassNotFoundException","IOException"],1],
+    ["Which keyword is used to create an object?",["new","create","object","this"],0],
+    ["Interfaces in Java can have ___ methods (Java 8+)?",["only abstract","default and static","only private","none of these"],1],
+    ["What is encapsulation?",["Hiding data using access modifiers","Multiple inheritance","Method overloading","Object creation"],0],
+    ["Which package contains the Scanner class?",["java.util","java.io","java.lang","java.net"],0],
+    ["What does 'static' mean for a variable?",["Belongs to instance","Belongs to class","Cannot change","Is private"],1],
+    ["Which loop executes at least once?",["for","while","do-while","foreach"],2],
+    ["What is method overriding?",["Same method name, different class hierarchy with same signature","Same class multiple methods","Changing return type only","Creating new class"],0]
+  ],
+  "HTML & CSS": [
+    ["Which tag is used to create a hyperlink?",["<link>","<a>","<href>","<nav>"],1],
+    ["Which CSS property changes text color?",["font-color","text-color","color","fg-color"],2],
+    ["What does CSS stand for?",["Creative Style Sheets","Cascading Style Sheets","Computer Style Sheets","Colorful Style Sheets"],1],
+    ["Which tag is used for the largest heading?",["<h6>","<heading>","<h1>","<head>"],2],
+    ["Which property is used to change background color?",["bg-color","background-color","color-bg","backdrop-color"],1],
+    ["Which HTML tag is used to insert an image?",["<image>","<img>","<src>","<pic>"],1],
+    ["Which CSS value centers a block element horizontally?",["margin:auto","align:center","text-align:center","center:true"],0],
+    ["Which tag defines an internal style sheet?",["<css>","<style>","<script>","<link>"],1],
+    ["Which property controls the spacing between lines?",["line-height","spacing","text-space","letter-spacing"],0],
+    ["What is the correct HTML for a checkbox?",["<input type='checkbox'>","<checkbox>","<input type='check'>","<select type='checkbox'>"],0],
+    ["Which CSS layout model is used for 2D layouts?",["Flexbox","Float","Grid","Inline-block"],2],
+    ["Which attribute specifies an alternate text for an image?",["alt","title","src","desc"],0],
+    ["Which unit is relative to the root element font size?",["em","px","rem","vh"],2],
+    ["Which tag is used to create a table row?",["<td>","<tr>","<th>","<table>"],1],
+    ["What does the 'box-sizing: border-box' do?",["Removes border","Includes padding/border in width","Adds shadow","Removes padding"],1]
+  ],
+  "Science": [
+    ["What is the chemical symbol for water?",["H2O","HO2","O2H","H3O"],0],
+    ["Which force keeps us grounded on Earth?",["Magnetism","Friction","Gravity","Tension"],2],
+    ["What is the powerhouse of the cell?",["Nucleus","Ribosome","Mitochondria","Cytoplasm"],2],
+    ["What gas do humans exhale the most?",["Oxygen","Carbon Dioxide","Nitrogen","Hydrogen"],1],
+    ["What is the speed of light approximately?",["3,00,000 km/s","1,50,000 km/s","5,00,000 km/s","1,00,000 km/s"],0],
+    ["Which element has the atomic number 1?",["Helium","Oxygen","Hydrogen","Carbon"],2],
+    ["What type of energy does a moving object have?",["Potential","Kinetic","Thermal","Chemical"],1],
+    ["Which blood cells fight infection?",["Red blood cells","White blood cells","Platelets","Plasma"],1],
+    ["What is the boiling point of water in Celsius?",["90","100","120","80"],1],
+    ["Which planet has the most moons?",["Earth","Mars","Saturn","Mercury"],2],
+    ["What is the study of living organisms called?",["Physics","Chemistry","Biology","Geology"],2],
+    ["Which vitamin is produced when skin is exposed to sunlight?",["Vitamin A","Vitamin C","Vitamin D","Vitamin K"],2],
+    ["What is the chemical symbol for gold?",["Go","Gd","Au","Ag"],2],
+    ["What part of the plant conducts photosynthesis?",["Root","Stem","Leaf","Flower"],2],
+    ["Which scientist proposed the theory of relativity?",["Newton","Einstein","Darwin","Tesla"],1]
+  ],
+  "Sports": [
+    ["How many players are there in a cricket team?",["9","10","11","12"],2],
+    ["In which sport would you perform a slam dunk?",["Volleyball","Basketball","Tennis","Badminton"],1],
+    ["How often are the Summer Olympic Games held?",["Every 2 years","Every 3 years","Every 4 years","Every 5 years"],2],
+    ["Which country won the FIFA World Cup 2022?",["Brazil","France","Argentina","Germany"],2],
+    ["How many players are on a football (soccer) team on field?",["9","10","11","12"],2],
+    ["What is the maximum score in a single frame of ten-pin bowling?",["10","20","30","40"],2],
+    ["In tennis, what is a score of zero called?",["Nil","Love","Zero","Duck"],1],
+    ["Which sport uses the term 'home run'?",["Cricket","Baseball","Hockey","Rugby"],1],
+    ["How many rings are there in the Olympic logo?",["4","5","6","7"],1],
+    ["What is the national sport of Japan?",["Judo","Karate","Sumo Wrestling","Kendo"],2],
+    ["In which sport is the term 'love' used?",["Badminton","Tennis","Squash","Table Tennis"],1],
+    ["How many points is a touchdown worth in American football?",["3","6","7","8"],1],
+    ["Which country is known as the birthplace of badminton?",["China","England","India","Malaysia"],1],
+    ["What is the term for hitting the ball out of the cricket ground?",["Boundary","Six","Four","Wicket"],1],
+    ["In Olympics, what color is the gold medal made primarily of?",["Pure Gold","Silver coated with gold","Bronze","Copper"],1]
+  ],
+  "Current Affairs": [
+    ["Which country hosted the 2024 Summer Olympics?",["Japan","France","USA","China"],1],
+    ["What does AI stand for in modern technology discussions?",["Automated Internet","Artificial Intelligence","Active Interface","Applied Informatics"],1],
+    ["Which Indian mission successfully landed near the Moon's south pole in 2023?",["Mangalyaan","Chandrayaan-3","Gaganyaan","Aditya-L1"],1],
+    ["What is the term for digital currency not controlled by a central bank?",["Cryptocurrency","E-wallet","Digital bond","Treasury bill"],0],
+    ["Which organization releases the annual Human Development Index?",["WHO","UNDP","UNESCO","IMF"],1],
+    ["What is the name of India's indigenous 5G framework initiative?",["Digital India","Bharat 5G","JioFiber","BSNL Net"],1],
+    ["Which global event focuses on climate change discussions annually?",["G20 Summit","COP (Conference of Parties)","Davos Forum","UN General Assembly"],1],
+    ["What does 'GDP' stand for in economics?",["Gross Domestic Product","General Development Plan","Global Direct Profit","Gross Domestic Policy"],0],
+    ["Which company developed the popular AI chatbot ChatGPT?",["Google","Meta","OpenAI","Microsoft"],2],
+    ["What is the term for working partly remote and partly in office?",["Freelancing","Hybrid work","Outsourcing","Telecommuting"],1],
+    ["Which Indian state recently became famous for its IT hub growth alongside Bangalore?",["Hyderabad (Telangana)","Patna","Bhopal","Ranchi"],0],
+    ["What is the name given to extreme weather events caused by climate change?",["Climate Crisis","Global Dimming","Weather Surge","Heat Index"],0],
+    ["Which renewable energy source uses sunlight?",["Wind","Solar","Tidal","Geothermal"],1],
+    ["What is the term for a country's electric vehicle transition policy?",["EV Mission","Green Mobility","Net Zero Drive","E-Mobility Policy"],1],
+    ["Which messaging feature became widely discussed for AI-generated content labeling?",["Watermarking","Encryption","Compression","Caching"],0]
+  ]
+};
+const CAT_ICONS = {"General Knowledge":"🌐","Java":"☕","HTML & CSS":"🧩","Science":"🧪","Sports":"⚽","Current Affairs":"📰"};
+
+/* ============================================================
+   AUTH
+   ============================================================ */
+function showAuth(which){
+  document.getElementById('loginPane').classList.toggle('hidden', which!=='login');
+  document.getElementById('signupPane').classList.toggle('hidden', which!=='signup');
+  document.getElementById('loginErr').textContent='';
+  document.getElementById('suErr').textContent='';
+}
+
+function doSignup(){
+  const nick = document.getElementById('suNick').value.trim();
+  const pass = document.getElementById('suPass').value;
+  const errEl = document.getElementById('suErr');
+  if(!nick || !pass){ errEl.textContent = 'Please fill in both fields.'; return; }
+  if(nick.length < 3){ errEl.textContent = 'Nickname must be at least 3 characters.'; return; }
+  const users = getUsers();
+  const key = nick.toLowerCase();
+  if(users[key]){ errEl.textContent = 'That nickname is already taken — same nickname cannot be used by two users.'; return; }
+  users[key] = {
+    nickname: nick, passHash: simpleHash(pass), totalMatches:0, totalWins:0, highestScore:0, history:[]
+  };
+  saveUsers(users);
+  errEl.textContent='';
+  loginAs(nick);
+}
+
+function doLogin(){
+  const nick = document.getElementById('loginNick').value.trim();
+  const pass = document.getElementById('loginPass').value;
+  const errEl = document.getElementById('loginErr');
+  const users = getUsers();
+  const key = nick.toLowerCase();
+  if(!users[key]){ errEl.textContent = 'No account with that nickname. Please sign up.'; return; }
+  if(users[key].passHash !== simpleHash(pass)){ errEl.textContent = 'Incorrect password.'; return; }
+  errEl.textContent='';
+  loginAs(users[key].nickname);
+}
+
+function loginAs(nick){
+  currentUser = nick;
+  sessionStorage.setItem('qb_current', nick);
+  document.getElementById('authScreen').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+  renderAll();
+}
+
+function doLogout(){
+  currentUser = null;
+  sessionStorage.removeItem('qb_current');
+  document.getElementById('app').classList.add('hidden');
+  document.getElementById('authScreen').classList.remove('hidden');
+  showAuth('login');
+  document.getElementById('loginNick').value='';
+  document.getElementById('loginPass').value='';
+}
+
+/* ============================================================
+   NAV TABS
+   ============================================================ */
+function goTab(name){
+  ['dashboard','profile','history','leaderboard'].forEach(t=>{
+    document.getElementById('tab-'+t).classList.toggle('hidden', t!==name);
+  });
+  document.querySelectorAll('.navbtn').forEach(b=>b.classList.toggle('active', b.dataset.tab===name));
+  if(name==='profile') renderProfile();
+  if(name==='history') renderHistory();
+  if(name==='leaderboard') renderLeaderboard();
+}
+
+/* ============================================================
+   RENDER DASHBOARD / PROFILE / HISTORY / LEADERBOARD
+   ============================================================ */
+function getUser(nick){ return getUsers()[nick.toLowerCase()]; }
+
+function renderAll(){
+  buildCatGrid();
+  const u = getUser(currentUser);
+  document.getElementById('wbName').textContent = `Welcome back, ${u.nickname}!`;
+  document.getElementById('dpName').textContent = u.nickname;
+  document.getElementById('dpEmail').textContent = `${u.nickname.toLowerCase().replace(/\s+/g,'')}@quizbattle.app`;
+  document.getElementById('dpMatches').textContent = u.totalMatches;
+  document.getElementById('dpWins').textContent = u.totalWins;
+  document.getElementById('dpHigh').textContent = u.highestScore;
+  document.getElementById('dpRate').textContent = (u.totalMatches? Math.round(u.totalWins/u.totalMatches*100):0)+'%';
+
+  // dashboard leaderboard (top 5)
+  const all = Object.values(getUsers()).sort((a,b)=>b.highestScore-a.highestScore).slice(0,5);
+  document.getElementById('dashLeaderBody').innerHTML = all.map((p,i)=>leaderRow(p,i)).join('') || emptyRow(3);
+
+  // dashboard recent history (top 4)
+  const hist = (u.history||[]).slice(-4).reverse();
+  document.getElementById('dashHistBody').innerHTML = hist.map(h=>`
+    <tr><td>${h.date}</td><td>${h.score}</td><td><span class="badge ${h.result==='Win'?'win':'loss'}">${h.result}</span></td></tr>
+  `).join('') || emptyRow(3);
+}
+
+function leaderRow(p,i){
+  const cls = i===0?'r1':i===1?'r2':i===2?'r3':'rN';
+  return `<tr><td><span class="rank-badge ${cls}">${i+1}</span></td><td>${p.nickname}</td><td>${p.highestScore}</td></tr>`;
+}
+function emptyRow(cols){ return `<tr><td colspan="${cols}" style="color:var(--muted); text-align:center; padding:14px 0;">No data yet</td></tr>`; }
+
+function renderProfile(){
+  const u = getUser(currentUser);
+  document.getElementById('pfName').textContent = u.nickname;
+  document.getElementById('pfEmail').textContent = `${u.nickname.toLowerCase().replace(/\s+/g,'')}@quizbattle.app`;
+  document.getElementById('pfMatches').textContent = u.totalMatches;
+  document.getElementById('pfWins').textContent = u.totalWins;
+  document.getElementById('pfHigh').textContent = u.highestScore;
+  document.getElementById('pfRate').textContent = (u.totalMatches? Math.round(u.totalWins/u.totalMatches*100):0)+'%';
+}
+
+function renderHistory(){
+  const u = getUser(currentUser);
+  const rows = (u.history||[]).slice().reverse().map(h=>`
+    <tr><td>${h.date}</td><td>${h.category}</td><td>${h.score}</td><td>#${h.rank}</td><td><span class="badge ${h.result==='Win'?'win':'loss'}">${h.result}</span></td></tr>
+  `).join('');
+  document.getElementById('fullHistBody').innerHTML = rows || emptyRow(5);
+}
+
+function renderLeaderboard(){
+  const all = Object.values(getUsers()).sort((a,b)=>b.highestScore-a.highestScore);
+  document.getElementById('fullLeaderBody').innerHTML = all.map((p,i)=>{
+    const cls = i===0?'r1':i===1?'r2':i===2?'r3':'rN';
+    return `<tr><td><span class="rank-badge ${cls}">${i+1}</span></td><td>${p.nickname}</td><td>${p.highestScore}</td><td>${p.totalWins}</td><td>${p.totalMatches}</td></tr>`;
+  }).join('') || emptyRow(5);
+}
+
+/* ============================================================
+   CATEGORY GRID + ROOM CREATE / JOIN
+   ============================================================ */
+let selectedCategory = null;
+function buildCatGrid(){
+  const grid = document.getElementById('catGrid');
+  grid.innerHTML = Object.keys(QUESTION_BANK).map(cat=>`
+    <div class="cat-btn" data-cat="${cat}" onclick="selectCategory('${cat}')">
+      <div class="ico">${CAT_ICONS[cat]}</div><div class="nm">${cat}</div>
+    </div>
+  `).join('');
+  if(!selectedCategory){ selectedCategory = Object.keys(QUESTION_BANK)[0]; }
+  highlightCat();
+}
+function selectCategory(cat){ selectedCategory = cat; highlightCat(); }
+function highlightCat(){
+  document.querySelectorAll('.cat-btn').forEach(b=>b.classList.toggle('selected', b.dataset.cat===selectedCategory));
+}
+
+function genRoomCode(){
+  const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let c=''; for(let i=0;i<5;i++) c+=chars[Math.floor(Math.random()*chars.length)];
+  return c;
+}
+
+let activeRoomCode = null;
+
+function createRoom(){
+  const qCount = parseInt(document.getElementById('qCountRange').value);
+  const maxPlayers = parseInt(document.getElementById('playerCountSel').value);
+  const rooms = getRooms();
+  let code = genRoomCode();
+  while(rooms[code]) code = genRoomCode();
+  rooms[code] = {
+    host: currentUser, category: selectedCategory, qCount, maxPlayers,
+    players: [currentUser], started:false
+  };
+  saveRooms(rooms);
+  activeRoomCode = code;
+  openLobby(code);
+}
+
+function openLobby(code){
+  document.getElementById('app').classList.add('hidden');
+  document.getElementById('lobbyScreen').classList.remove('hidden');
+  refreshLobby(code);
+}
+
+function refreshLobby(code){
+  const room = getRooms()[code];
+  if(!room) return;
+  document.getElementById('lobbyCode').textContent = code;
+  document.getElementById('lobbyCat').textContent = room.category;
+  document.getElementById('lobbyQ').textContent = room.qCount;
+  document.getElementById('lobbyCount').textContent = room.players.length;
+  document.getElementById('lobbyMax').textContent = room.maxPlayers;
+  document.getElementById('lobbyPlayers').innerHTML = room.players.map((p,i)=>
+    `<span class="player-chip">${i===0?'👑':'🙂'} ${p}</span>`
+  ).join('');
+  const startBtn = document.getElementById('startBtn');
+  if(room.players.length >= 2){
+    startBtn.disabled = false;
+    startBtn.textContent = room.players.length < room.maxPlayers
+      ? `Start Quiz Now (${room.players.length}/${room.maxPlayers} joined)`
+      : 'Start Quiz';
+  } else {
+    startBtn.disabled = true;
+    startBtn.textContent = 'Need at least 2 players to start';
+  }
+}
+
+function leaveLobby(){
+  const rooms = getRooms();
+  delete rooms[activeRoomCode];
+  saveRooms(rooms);
+  activeRoomCode = null;
+  document.getElementById('lobbyScreen').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+}
+
+function joinRoom(){
+  const code = document.getElementById('joinCodeInput').value.trim().toUpperCase();
+  const errEl = document.getElementById('joinErr');
+  const rooms = getRooms();
+  if(!rooms[code]){ errEl.textContent = 'Room code not found.'; return; }
+  if(rooms[code].started){ errEl.textContent = 'This battle has already started.'; return; }
+  if(rooms[code].players.length >= rooms[code].maxPlayers){ errEl.textContent = 'This room is full.'; return; }
+  errEl.textContent='';
+  document.getElementById('joinAsCode').textContent = code;
+  pendingJoinCode = code;
+  document.getElementById('app').classList.add('hidden');
+  document.getElementById('joinAsScreen').classList.remove('hidden');
+}
+let pendingJoinCode = null;
+
+function confirmJoin(){
+  const nick = document.getElementById('joinAsNick').value.trim();
+  const errEl = document.getElementById('joinAsErr');
+  if(!nick){ errEl.textContent='Enter a nickname.'; return; }
+  const rooms = getRooms();
+  const room = rooms[pendingJoinCode];
+  if(!room){ errEl.textContent='Room no longer exists.'; return; }
+  if(room.players.some(p=>p.toLowerCase()===nick.toLowerCase())){ errEl.textContent='That nickname already joined this room.'; return; }
+  if(room.players.length >= room.maxPlayers){ errEl.textContent='Room is full.'; return; }
+  room.players.push(nick);
+  saveRooms(rooms);
+  errEl.textContent='';
+  document.getElementById('joinAsScreen').classList.add('hidden');
+  activeRoomCode = pendingJoinCode;
+  openLobby(pendingJoinCode);
+}
+function cancelJoinAs(){
+  document.getElementById('joinAsScreen').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+}
+
+/* ============================================================
+   QUIZ ENGINE — pass-and-play, hidden answers
+   ============================================================ */
+let quiz = null; // {room, questions, players, scores, qIndex, playerIndex}
+
+function shuffleArr(arr){ const a=arr.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+
+function startQuiz(){
+  const rooms = getRooms();
+  const room = rooms[activeRoomCode];
+  room.started = true;
+  saveRooms(rooms);
+
+  const bank = shuffleArr(QUESTION_BANK[room.category]).slice(0, room.qCount);
+  quiz = {
+    code: activeRoomCode,
+    category: room.category,
+    questions: bank,
+    players: room.players.slice(),
+    scores: {},
+    qIndex: 0,
+    playerIndex: 0
+  };
+  room.players.forEach(p=>quiz.scores[p]=0);
+
+  document.getElementById('lobbyScreen').classList.add('hidden');
+  showPassScreen();
+}
+
+function showPassScreen(){
+  const total = quiz.questions.length;
+  document.getElementById('passQNum').textContent = quiz.qIndex+1;
+  document.getElementById('passQTotal').textContent = total;
+  document.getElementById('passProgress').style.width = Math.round((quiz.qIndex/total)*100)+'%';
+  document.getElementById('passWho').textContent = quiz.players[quiz.playerIndex];
+  document.getElementById('quizScreen').classList.add('hidden');
+  document.getElementById('passScreen').classList.remove('hidden');
+}
+
+function revealQuestion(){
+  document.getElementById('passScreen').classList.add('hidden');
+  document.getElementById('quizScreen').classList.remove('hidden');
+  const [qText, opts, correctIdx] = quiz.questions[quiz.qIndex];
+  document.getElementById('qCatLabel').textContent = quiz.category;
+  document.getElementById('qPlayerLabel').textContent = quiz.players[quiz.playerIndex];
+  document.getElementById('qText').textContent = qText;
+  const optsBox = document.getElementById('qOptions');
+  optsBox.innerHTML = opts.map((o,i)=>`<button class="opt" data-i="${i}" onclick="answerQuestion(${i},${correctIdx})">${o}</button>`).join('');
+}
+
+function answerQuestion(chosenIdx, correctIdx){
+  const buttons = document.querySelectorAll('#qOptions .opt');
+  buttons.forEach(b=>b.disabled=true);
+  buttons[correctIdx].classList.add('correct');
+  if(chosenIdx !== correctIdx){ buttons[chosenIdx].classList.add('wrong'); }
+  else { quiz.scores[quiz.players[quiz.playerIndex]] += 10; }
+
+  setTimeout(()=>{
+    quiz.playerIndex++;
+    if(quiz.playerIndex >= quiz.players.length){
+      quiz.playerIndex = 0;
+      quiz.qIndex++;
+    }
+    if(quiz.qIndex >= quiz.questions.length){
+      finishQuiz();
+    } else {
+      showPassScreen();
+    }
+  }, 1000);
+}
+
+function finishQuiz(){
+  document.getElementById('quizScreen').classList.add('hidden');
+  // rank players
+  const ranked = quiz.players.map(p=>({name:p, score:quiz.scores[p]})).sort((a,b)=>b.score-a.score);
+  // assign ranks (ties share rank)
+  ranked.forEach((r,i)=>{ r.rank = i+1; });
+
+  const dateStr = new Date().toLocaleDateString('en-GB', {day:'2-digit',month:'short',year:'numeric'});
+  const users = getUsers();
+  ranked.forEach(r=>{
+    const key = r.name.toLowerCase();
+    if(users[key]){
+      const u = users[key];
+      u.totalMatches += 1;
+      if(r.rank===1) u.totalWins += 1;
+      if(r.score > u.highestScore) u.highestScore = r.score;
+      u.history = u.history || [];
+      u.history.push({date:dateStr, category:quiz.category, score:r.score, rank:r.rank, result: r.rank===1?'Win':'Loss'});
+    }
+  });
+  saveUsers(users);
+
+  // clean up room
+  const rooms = getRooms();
+  delete rooms[quiz.code];
+  saveRooms(rooms);
+
+  // render results
+  const list = document.getElementById('resultsList');
+  list.innerHTML = ranked.map(r=>`
+    <div class="result-row ${r.rank===1?'winner-row':''}">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span class="trophy">${r.rank===1?'🏆':r.rank===2?'🥈':r.rank===3?'🥉':'🎯'}</span>
+        <div><b>${r.name}</b><div style="font-size:11px; color:var(--muted);">Rank #${r.rank}</div></div>
+      </div>
+      <div style="font-size:18px; font-weight:700; color:${r.rank===1?'var(--gold)':'var(--text)'}">${r.score} pts</div>
+    </div>
+  `).join('');
+
+  document.getElementById('resultsScreen').classList.remove('hidden');
+}
+
+function playAgain(){
+  document.getElementById('resultsScreen').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+  renderAll();
+}
+function exitToDashboard(){
+  document.getElementById('resultsScreen').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+  goTab('dashboard');
+  renderAll();
+}
+
+/* ============================================================
+   INIT — restore session if present
+   ============================================================ */
+(function init(){
+  const saved = sessionStorage.getItem('qb_current');
+  if(saved && getUser(saved)){
+    loginAs(saved);
+  }
+})();
+</script>
+</body>
+</html>
